@@ -1,0 +1,30 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Förhör Resultat</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (loading()) {
+      <p>Laddar...</p>
+    } @else if (result(); as res) {
+      <p class="transcript">
+        @for (segment of textSegments(); track segment.text) {
+          <span [class.highlighted]="segment.highlighted">{{ segment.text }}</span>
+        }
+      </p>
+      @if (res.highlights && res.highlights.length > 0) {
+        <mat-chip-set>
+          @for (highlight of res.highlights; track highlight) {
+            <mat-chip
+              (mouseenter)="activeHighlight.set(highlight)"
+              (mouseleave)="activeHighlight.set(null)"
+            >
+              {{ highlight }}
+            </mat-chip>
+          }
+        </mat-chip-set>
+      }
+    } @else {
+      <p>Inga resultat att visa.</p>
+    }
+  </mat-card-content>
+</mat-card>
