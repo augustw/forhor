@@ -4,11 +4,15 @@ const forhorText = "Vittnet uppger att händelsen inträffade den 3 maj vid 22-t
 const highlightsPrompt = "Extrahera ord från förhörsmaterialet som ger en brottsutredare en bra översikt av vad som framkom i förhöret. Saker som kan vara intressant är namn, eventuella brott och ledtrådar som kan vara intressanta för utredningen. Formattera datum enligt yyyy-MM-dd hh:mm:ss. Skicka endast med hela ord eller meningar, inga enskilda bokstäver eller siffror";
 const express = require("express");
 const { z } = require("zod");
+const { DBManager } = require("./DBManager");
 
 const app = express();
 app.use(express.json());
 
 const PORT = 3000;
+
+// Initiera databas
+const dbManager = new DBManager();
 
 // 1. Schema för inkommande request
 const RequestSchema = z.object({
@@ -99,7 +103,8 @@ Exempel:
       });
     }
 
-    // 8. Returnera resultat
+    // 8. Spara till databas och returnera resultat
+    await dbManager.saveForhorAndHighlights(prompt, forhorText, highlightsValidated.data);
 
     res.json({text: forhorText, highlights: highlightsValidated.data});
 
