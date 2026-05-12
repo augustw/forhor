@@ -12,7 +12,7 @@ app.use(express.json());
 const PORT = 3000;
 
 // Initiera databas
-const dbManager = new DBManager();
+// const dbManager = new DBManager();
 
 // 1. Schema för inkommande request
 const RequestSchema = z.object({
@@ -102,9 +102,6 @@ Exempel:
         raw: highlights,
       });
     }
-
-    // 8. Spara till databas och returnera resultat
-    await dbManager.saveForhorAndHighlights(prompt, forhorText, highlightsValidated.data);
 
     res.json({text: forhorText, highlights: highlightsValidated.data});
 
