@@ -1,32 +1,44 @@
-import Database from "better-sqlite3";
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
 
-const db = new Database('./src/data/database.db');
+const dbDir = path.resolve(__dirname, '.');
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const dbPath = path.join(dbDir, 'database.db');
+const db = new sqlite3.Database(dbPath);
 
 // Skapa tabeller om de inte finns
-db.exec(`
+db.serialize(() => {
+  db.run(`
     CREATE TABLE IF NOT EXISTS forhor (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    text TEXT NOT NULL,
-    created DATETIME DEFAULT CURRENT_TIMESTAMP
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      text TEXT NOT NULL,
+      created DATETIME DEFAULT CURRENT_TIMESTAMP
     )
-`);
-db.exec(`
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS highlights (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    forhor_id INTEGER NOT NULL,
-    highlight TEXT NOT NULL,
-    FOREIGN KEY (forhor_id) REFERENCES forhor(id) ON DELETE CASCADE
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      forhor_id INTEGER NOT NULL,
+      highlight TEXT NOT NULL,
+      FOREIGN KEY (forhor_id) REFERENCES forhor(id) ON DELETE CASCADE
     )
-`);
+  `);
+});
 
-// Grundfyll tabellerna om de är tomma
+console.log('Seeding completed. Database and tables are ready.');
 
-const count = db
-  .prepare("SELECT COUNT(*) as count FROM users")
-  .get();
+// select * from forhor
+db.all("SELECT * FROM forhor", (err, rows) => {
+  if (err) {
+    console.error('Error fetching förhör:', err);
+  } else {
+    console.log('Förhör:', rows);
+  }
+});
 
-if (count.count === 0) {
-
-} else {
-  console.log("Databasen är redan initierad");
-}
+db.close();

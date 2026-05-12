@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "stop": "kill $(lsof -t -i:3000)",
+    "seed": "node src/data/seed.js"
   },
   "keywords": [],
   "author": "",
@@ -14,8 +16,5 @@
     "express": "^5.2.1",
     "sqlite3": "^6.0.1",
     "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13"
   }
 }

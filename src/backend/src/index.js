@@ -12,7 +12,7 @@ app.use(express.json());
 const PORT = 3000;
 
 // Initiera databas
-// const dbManager = new DBManager();
+const dbManager = new DBManager();
 
 // 1. Schema för inkommande request
 const RequestSchema = z.object({

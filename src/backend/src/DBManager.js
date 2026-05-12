@@ -1,21 +1,45 @@
-import Database from "better-sqlite3";
+const fs = require('fs');
+const path = require('path');
+const sqlite3 = require('sqlite3').verbose();
 
-export class DBManager {
-  db = new Database('./src/data/database.db');
+class DBManager {
+  constructor() {
+    const dbDir = path.resolve(__dirname, 'data');
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
 
-  async saveForhorAndHighlights(prompt, text, highlights) {
-    // Implement the logic to save the Forhor data to the database
-    const forhorStmt = this.db.prepare(`INSERT INTO forhor (text) VALUES (?)`);
-    const result = forhorStmt.run(text);
-    const forhorId = result.lastInsertRowid;
+    const dbPath = path.join(dbDir, 'database.db');
+    this.db = new sqlite3.Database(dbPath);
+  }
 
-    const highlightStmt = this.db.prepare(`INSERT INTO highlights (forhor_id, highlight) VALUES (?, ?)`);
-    const insertHighlights = this.db.transaction((highlights) => {
-      for (const highlight of highlights) {
-        highlightStmt.run(forhorId, highlight);
-      }
+  saveForhorAndHighlights(prompt, text, highlights) {
+    return new Promise((resolve, reject) => {
+      const db = this.db;
+
+      db.serialize(() => {
+        db.run(`INSERT INTO forhor (text) VALUES (?)`, [text], function (err) {
+          if (err) {
+            return reject(err);
+          }
+
+          const forhorId = this.lastID;
+          const stmt = db.prepare(`INSERT INTO highlights (forhor_id, highlight) VALUES (?, ?)`);
+
+          for (const highlight of highlights) {
+            stmt.run(forhorId, highlight);
+          }
+
+          stmt.finalize((finalizeErr) => {
+            if (finalizeErr) {
+              return reject(finalizeErr);
+            }
+            resolve({ forhorId });
+          });
+        });
+      });
     });
-    insertHighlights(highlights);
-    
   }
 }
+
+module.exports = { DBManager };
