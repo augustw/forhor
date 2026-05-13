@@ -1,4 +1,5 @@
-interface Forhor {
-    text: string;
-    highlights: string[];
+export interface Forhor {
+  id: number;
+  text: string;
+  highlights: string[];
 }

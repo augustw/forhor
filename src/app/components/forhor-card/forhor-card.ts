@@ -1,9 +1,9 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, Input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatChipsModule } from '@angular/material/chips';
-import { ForhorService } from '../../forhor.service';
+import { Forhor } from '../../model/forhor';
 
 interface TextSegment {
   text: string;
@@ -16,23 +16,19 @@ interface TextSegment {
   templateUrl: './forhor-card.html',
   styleUrl: './forhor-card.scss',
 })
-export class ForhorCard implements OnInit {
-  private readonly forhorService = inject(ForhorService);
+export class ForhorCard {
+  @Input() forhor!: Forhor;
 
-  readonly result = signal<{ text?: string; highlights?: string[] } | null>(null);
-  readonly loading = signal(false);
   readonly activeHighlight = signal<string | null>(null);
+  readonly expanded = signal(false);
+  private readonly maxLines = 5;
 
-  readonly textSegments = computed<TextSegment[]>(() => {
-    const res = this.result();
-    const highlight = this.activeHighlight();
-    const text = res?.text ?? '';
-
+  getTextSegments(text: string, highlight: string | null): TextSegment[] {
     if (!highlight || !text) {
       return [{ text, highlighted: false }];
     }
 
-    const escaped = highlight.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escaped = highlight.trim().replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
     const splitPattern = new RegExp(`(${escaped})`, 'gi');
     const matchPattern = new RegExp(escaped, 'i');
 
@@ -40,20 +36,35 @@ export class ForhorCard implements OnInit {
       text: part,
       highlighted: matchPattern.test(part),
     }));
-  });
+  }
 
-  ngOnInit() {
-    this.loading.set(true);
-    this.forhorService.getForhor('Förhörstext').subscribe({
-      next: (data) => {
-        this.result.set(data as { text?: string; highlights?: string[] });
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Error fetching forhor:', err);
-        this.loading.set(false);
-      }
-    });
+  getVisibleText(text: string): string {
+    if (this.expanded() || !this.hasMoreThanMaxLines(text)) {
+      return text;
+    }
+
+    const lines = text.split(/\r?\n/);
+    return lines.slice(0, this.maxLines).join('\n');
+  }
+
+  hasMoreThanMaxLines(text: string): boolean {
+    return text.split(/\r?\n/).length > this.maxLines;
+  }
+
+  toggleExpanded() {
+    this.expanded.set(!this.expanded());
+  }
+
+  setActiveHighlight(highlight: string | null) {
+    this.activeHighlight.set(highlight);
+  }
+
+  isHighlightActive(highlight: string) {
+    return this.activeHighlight() === highlight;
+  }
+
+  getHighlightForCard(): string | null {
+    return this.activeHighlight();
   }
 }
 

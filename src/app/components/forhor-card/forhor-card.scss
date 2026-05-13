@@ -1,5 +1,6 @@
 .transcript {
   line-height: 1.6;
+  white-space: pre-line;
 }
 
 .highlighted {
@@ -9,4 +10,21 @@
 
 mat-chip {
   cursor: pointer;
+}
+
+.show-more-button {
+  margin-top: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: transparent;
+  color: #1e88e5;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.show-more-button:hover {
+  text-decoration: underline;
 }

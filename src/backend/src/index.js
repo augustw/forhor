@@ -5,6 +5,7 @@ const express = require("express");
 const { z } = require("zod");
 const { DBManager } = require("./DBManager");
 const { OllamaClient } = require("./OllamaClient");
+const { OllamaEmbeddingClient } = require("./OllamaEmbeddingClient");
 
 const app = express();
 app.use(express.json());
@@ -13,12 +14,25 @@ const PORT = 3000;
 
 const dbManager = new DBManager();
 const ollamaClient = new OllamaClient();
+const ollamaEmbeddingClient = new OllamaEmbeddingClient();
 
 const RequestSchema = z.object({
   prompt: z.string().min(1),
 });
 
-app.post("/chat", async (req, res) => {
+app.get("/api/forhor", async (req, res) => {
+  try {
+    const forhorList = await dbManager.getAllForhor();
+    res.json(forhorList);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch förhör from database",
+      details: err.message,
+    });
+  }
+});
+
+app.post("/api/chat", async (req, res) => {
   const parsed = RequestSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -34,6 +48,29 @@ app.post("/chat", async (req, res) => {
     const highlights = await ollamaClient.extractHighlights(prompt);
 
     res.json({ text: forhorText, highlights });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to contact Ollama",
+      details: err.message,
+    });
+  }
+});
+
+/** Test:
+ curl -X POST http://localhost:3000/api/embed \
+  -H "Content-Type: application/json" \
+  -d '{"text":"flygplan"}'
+ */
+app.post('/api/embed', async (req, res) => {
+  const { text } = req.body;
+
+  if (typeof text !== 'string' || text.trim() === '') {
+    return res.status(400).json({ error: 'Text must be a non-empty string' });
+  }
+
+  try {
+    const embedding = await ollamaEmbeddingClient.embed(text);
+    res.json({ embedding });
   } catch (err) {
     res.status(500).json({
       error: "Failed to contact Ollama",

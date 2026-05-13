@@ -1,0 +1,6 @@
+.forhor-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--std-gap);
+  padding-bottom: 120px; /* Space for sticky input */
+}

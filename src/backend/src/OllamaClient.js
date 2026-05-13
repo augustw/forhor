@@ -2,7 +2,7 @@ class OllamaClient {
   constructor(options = {}) {
     this.endpoint = options.endpoint ?? 'http://localhost:11434/api/chat';
     this.model = options.model ?? 'qwen2.5:7b';
-    this.timeoutMs = options.timeoutMs ?? 120000;
+    this.timeoutMs = options.timeoutMs ?? 180000;
     this.promptTemplate = options.promptTemplate ??
       `Extrahera ord från förhörsmaterialet som ger en brottsutredare en bra översikt av vad som framkom i förhöret. 
       Saker som kan vara intressant är namn, eventuella brott och ledtrådar som kan vara intressanta för utredningen. 

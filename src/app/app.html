@@ -1,1 +1,17 @@
-<app-forhor-card></app-forhor-card>
+@if (loading()) {
+  <p>Laddar...</p>
+} @else if (forhorList(); as list) {
+  <div class="forhor-list">
+  @if (list.length === 0) {
+    <p>Inga förhör hittades.</p>
+  } @else {
+    @for (forhor of list; track forhor.id) {
+      <app-forhor-card [forhor]="forhor"></app-forhor-card>
+    }
+  }
+  </div>
+} @else {
+  <p>Inga resultat att visa.</p>
+}
+
+<app-forhor-input></app-forhor-input>

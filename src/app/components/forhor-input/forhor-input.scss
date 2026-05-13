@@ -1,0 +1,26 @@
+.forhor-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.95));
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+
+  .input-field {
+    flex: 1;
+    max-width: 600px;
+  }
+
+  .send-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+  }
+}

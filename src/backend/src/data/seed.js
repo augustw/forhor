@@ -2,109 +2,144 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const { OllamaClient } = require('../OllamaClient');
+const { TextChunker } = require('../TextChunker');
 const { forhorsTexter } = require('./forhor.data');
 
 const dbDir = path.resolve(__dirname, '.');
 if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+    fs.mkdirSync(dbDir, { recursive: true });
 }
 
 const dbPath = path.join(dbDir, 'database.db');
 const db = new sqlite3.Database(dbPath);
 const ollamaClient = new OllamaClient();
+const textChunker = new TextChunker({ maxChunkSize: 1000, overlap: 150 });
 
 function runSql(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) {
-        return reject(err);
-      }
-      resolve(this.lastID);
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function (err) {
+            if (err) {
+                return reject(err);
+            }
+            resolve(this.lastID);
+        });
     });
-  });
 }
 
 function getSingle(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) {
-        return reject(err);
-      }
-      resolve(row);
+    return new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(row);
+        });
     });
-  });
 }
 
 async function main() {
-  await new Promise((resolve, reject) => {
-    db.serialize(() => {
-      db.run(
-        `CREATE TABLE IF NOT EXISTS forhor (
+    await new Promise((resolve, reject) => {
+        db.serialize(() => {
+            db.run(
+                `CREATE TABLE IF NOT EXISTS forhor (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           text TEXT NOT NULL,
           created DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
-        (err) => (err ? reject(err) : resolve())
-      );
+                (err) => (err ? reject(err) : resolve())
+            );
+        });
     });
-  });
 
-  await new Promise((resolve, reject) => {
-    db.serialize(() => {
-      db.run(
-        `CREATE TABLE IF NOT EXISTS highlights (
+    await new Promise((resolve, reject) => {
+        db.serialize(() => {
+            db.run(`
+        CREATE TABLE IF NOT EXISTS forhor_chunks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          forhor_id INTEGER NOT NULL,
+          chunk_index INTEGER NOT NULL,
+          start_pos INTEGER NOT NULL,
+          end_pos INTEGER NOT NULL,
+          chunk TEXT NOT NULL,
+          created DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (forhor_id) REFERENCES forhor(id) ON DELETE CASCADE
+        )`, (err) => (err ? reject(err) : resolve())
+            );
+        });
+    });
+
+    await new Promise((resolve, reject) => {
+        db.serialize(() => {
+            db.run(
+                `CREATE TABLE IF NOT EXISTS highlights (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           forhor_id INTEGER NOT NULL,
           highlight TEXT NOT NULL,
           FOREIGN KEY (forhor_id) REFERENCES forhor(id) ON DELETE CASCADE
         )`,
-        (err) => (err ? reject(err) : resolve())
-      );
+                (err) => (err ? reject(err) : resolve())
+            );
+        });
     });
-  });
 
-  console.log('Database and tables are ready.');
+    console.log('Database and tables are ready.');
 
-  const row = await getSingle('SELECT COUNT(*) as count FROM forhor');
-  const count = row ? row.count : 0;
-  console.log('Antal förhör i databasen:', count);
+    const row = await getSingle('SELECT COUNT(*) as count FROM forhor');
+    const count = row ? row.count : 0;
+    console.log('Antal förhör i databasen:', count);
 
-  if (count === 0) {
-    console.log('Seeding forhor table with sample data...');
-    for (const text of forhorsTexter) {
-      const forhorId = await runSql('INSERT INTO forhor (text) VALUES (?)', [text]);
+    if (count === 0) {
+        console.log('Seeding forhor table with sample data...');
+        for (const text of forhorsTexter) {
+            const forhorId = await runSql('INSERT INTO forhor (text) VALUES (?)', [text]);
 
-      let highlights = [];
-      try {
-        highlights = await ollamaClient.extractHighlights(text);
-      } catch (err) {
-        console.error(`Error extracting highlights for "${text}":`, err);
-      }
+            let highlights = [];
+            try {
+                highlights = await ollamaClient.extractHighlights(text);
+            } catch (err) {
+                console.error(`Error extracting highlights for "${text}":`, err);
+            }
 
-      console.log(`Sparar ${highlights.length} höjdpunkter för förhör #${forhorId}`);
+            console.log(`Sparar ${highlights.length} höjdpunkter för förhör #${forhorId}`);
 
-      for (const highlight of highlights) {
-        await runSql('INSERT INTO highlights (forhor_id, highlight) VALUES (?, ?)', [forhorId, highlight]);
-      }
-      console.log(`Förhör #${forhorId} och dess höjdpunkter sparade i databasen. Highlights:`, highlights);
+            for (const highlight of highlights) {
+                await runSql('INSERT INTO highlights (forhor_id, highlight) VALUES (?, ?)', [forhorId, highlight]);
+            }
+            console.log(`Förhör #${forhorId} och dess höjdpunkter sparade i databasen. Highlights:`, highlights);
+
+            console.log('Skapar chunks för förhör #', forhorId);
+            const chunks = textChunker.smartChunk(text);
+
+            chunks.forEach(async (chunk) => {
+                await runSql(
+                    `INSERT INTO forhor_chunks (forhor_id, chunk_index, start_pos, end_pos, chunk) VALUES (?, ?, ?, ?, ?)`,
+                    [forhorId, chunk.index, chunk.start, chunk.end, chunk.text]
+                );
+            });
+            console.log(`${chunks.length}st chunks för förhör #${forhorId} sparade i databasen.`);
+        }
+
     }
-  }
-
-  const allForhor = await new Promise((resolve, reject) => {
-    db.all('SELECT * FROM forhor', (err, rows) => {
-      if (err) {
-        return reject(err);
-      }
-      resolve(rows);
-    });
-  });
-
-  console.log('Förhör i databasen:', allForhor);
-  db.close();
 }
 
-main().catch((err) => {
-  console.error('Seed failed:', err);
-  db.close();
-  process.exit(1);
-});
+(async () => {
+    try {
+        await main();
+        
+        const allForhor = await new Promise((resolve, reject) => {
+            db.all('SELECT * FROM forhor', (err, rows) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(rows);
+            });
+        });
+
+        console.log('Förhör i databasen:', allForhor);
+        db.close();
+    } catch (err) {
+        console.error('Seed failed:', err);
+        db.close();
+        process.exit(1);
+    }
+})();

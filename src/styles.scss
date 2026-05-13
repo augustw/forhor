@@ -8,10 +8,17 @@ $theme: mat.define-theme();
 
 @include mat.all-component-themes($theme);
 
+
+// CSS custom properties för design tokens
+:root {
+  --std-gap: 2rem;
+}
+
 html, body {
   height: 100%;
 }
 body {
+  padding: var(--std-gap);
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
 }

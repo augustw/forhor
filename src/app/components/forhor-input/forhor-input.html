@@ -1,0 +1,22 @@
+<div class="forhor-input-container">
+  <mat-form-field appearance="outline" class="input-field">
+    <mat-label>Sök i förhör...</mat-label>
+    <input
+      matInput
+      [formControl]="promptControl"
+      (keypress)="onKeyPress($event)"
+      [disabled]="loading()"
+    />
+  </mat-form-field>
+
+  <button
+    mat-fab
+    color="primary"
+    (click)="onSubmit()"
+    [disabled]="loading() || !promptControl.value?.trim()"
+    class="send-button"
+    matTooltip="Skicka (Enter)"
+  >
+    <mat-icon>search</mat-icon>
+  </button>
+</div>
