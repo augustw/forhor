@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js",
     "stop": "kill $(lsof -t -i:3000)",
-    "seed": "node src/data/seed.js"
+    "seed": "node src/data/seed.js",
+    "unseed": "node src/data/unseed.js"
   },
   "keywords": [],
   "author": "",

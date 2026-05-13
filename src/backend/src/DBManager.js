@@ -13,6 +13,40 @@ class DBManager {
     this.db = new sqlite3.Database(dbPath);
   }
 
+  getAllForhor() {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        `SELECT f.id, f.text, h.highlight
+         FROM forhor f
+         LEFT JOIN highlights h ON h.forhor_id = f.id
+         ORDER BY f.id, h.id`,
+        (err, rows) => {
+          if (err) {
+            return reject(err);
+          }
+
+          const grouped = new Map();
+
+          for (const row of rows) {
+            if (!grouped.has(row.id)) {
+              grouped.set(row.id, {
+                id: row.id,
+                text: row.text,
+                highlights: [],
+              });
+            }
+
+            if (row.highlight != null) {
+              grouped.get(row.id).highlights.push(row.highlight);
+            }
+          }
+
+          resolve(Array.from(grouped.values()));
+        }
+      );
+    });
+  }
+
   saveForhorAndHighlights(prompt, text, highlights) {
     return new Promise((resolve, reject) => {
       const db = this.db;
