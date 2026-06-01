@@ -22,6 +22,6 @@ export class ForhorService {
 
   /** Semantisk sökning efter text mot samtliga förhör */
   searchForhor(text: string): Observable<Forhor> {
-    return this.http.post<Forhor>('/api/chat', { text: text }, { headers: this.jsonHeaders });
+    return this.http.post<Forhor>('/api/forhor/search', { text: text }, { headers: this.jsonHeaders });
   }
 }

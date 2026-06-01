@@ -1,15 +1,22 @@
 class TextChunker {
     constructor(options = {}) {
-        this.maxChunkSize = options.maxChunkSize || 1000;
-        this.overlap = options.overlap || 150;
+        this.maxChunkSize = options.maxChunkSize || 400;
+        this.overlap = options.overlap || 50;
+    }
+
+    rowChunk(text) {
+        const chunks = [];
+        const rows = text.replace('\n\n', '\n').split('\n').filter(s => s.trim());
+        for(let i = 0; i < rows.length; i++) {
+            chunks.push(this.buildChunk(rows[i], i, text));
+        }
+        return chunks;
     }
 
     splitIntoSentences(text) {
         return text
-            .replace(/\r\n/g, '\n')  // Normalisera radbrytningar
-            .replace(/\r/g, '\n')    // Hantera gamla Mac-radbrytningar
-            .split(/([.!?]\s+|\n\s*)/)  // Splitta på meningsslut ELLER radbrytningar
-            .filter((s, i) => i % 2 === 0)  // Ta bara text-delarna (inte separatorerna)
+            .replace(/\s+/g, " ")
+            .split(/(?<=[.!?])\s+/)
             .map(s => s.trim())
             .filter(Boolean);
     }

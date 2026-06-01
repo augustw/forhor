@@ -74,6 +74,20 @@ class DBManager {
       });
     });
   }
+
+  getAllForhorChunks() {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        `SELECT forhor_id, chunk_index, start_pos, end_pos, chunk FROM forhor_chunks ORDER BY forhor_id, chunk_index`,
+        (err, rows) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(rows);
+        }
+      );
+    });
+  }
 }
 
 module.exports = { DBManager };

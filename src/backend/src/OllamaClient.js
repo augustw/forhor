@@ -2,11 +2,11 @@ class OllamaClient {
   constructor(options = {}) {
     this.endpoint = options.endpoint ?? 'http://localhost:11434/api/chat';
     this.model = options.model ?? 'qwen2.5:7b';
-    this.timeoutMs = options.timeoutMs ?? 180000;
+    this.timeoutMs = options.timeoutMs ?? 4 * 60 * 1000;
     this.promptTemplate = options.promptTemplate ??
       `Extrahera ord från förhörsmaterialet som ger en brottsutredare en bra översikt av vad som framkom i förhöret. 
       Saker som kan vara intressant är namn, eventuella brott och ledtrådar som kan vara intressanta för utredningen. 
-      Formattera datum enligt yyyy-MM-dd hh:mm:ss. Skicka endast med hela ord eller väldigt korta meningar, inga enskilda bokstäver eller siffror`;
+      Formattera datum enligt yyyy-MM-dd hh:mm:ss. Skicka endast med hela ord eller väldigt korta meningar, inga enskilda bokstäver eller siffror. Försök hålla dig under 30 tecken.`;
   }
 
   async extractHighlights(prompt) {
@@ -23,11 +23,12 @@ class OllamaClient {
           messages: [
             {
               role: 'user',
-              content: `${this.promptTemplate} Förhörsmaterial: ${prompt}
+              content: `${this.promptTemplate}. 
+              Förhörsmaterial: ${prompt}
 
-Returnera ENDAST en JSON-array av strings, utan extra text.
-Exempel:
-["person", "plats", "tid", "händelse"]`,
+              Returnera ENDAST en JSON-array av strings, utan extra text.
+              Exempel:
+              ["person", "plats", "tid", "händelse"]`,
             },
           ],
           stream: false,

@@ -79,6 +79,30 @@ app.post('/api/embed', async (req, res) => {
   }
 });
 
+app.post(`/api/forhor/search`, async (req, res) => {
+  const { text } = req.body;
+  console.log(`Received search query:`, text);
+
+  try {
+    const queryEmbedding = await ollamaEmbeddingClient.embed(text);
+    console.log(`Query embedding:`, queryEmbedding);
+    const chunks = await dbManager.getAllForhorChunks();
+    const results = chunks.map(chunk => {
+      const chunkEmbedding = chunk.embedding; // Assuming this is stored as a Buffer
+      const similarity = ollamaEmbeddingClient.cosineSimilarity(queryEmbedding, chunkEmbedding);
+      console.log("Similarity", similarity);
+      return { ...chunk, similarity };
+    }).sort((a, b) => b.similarity - a.similarity); // Sort by similarity
+
+    res.json({ results });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to perform search",
+      details: err.message,
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
 });

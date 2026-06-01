@@ -4,6 +4,7 @@ const fs = require('fs');
 const { OllamaClient } = require('../OllamaClient');
 const { TextChunker } = require('../TextChunker');
 const { forhorsTexter } = require('./forhor.data');
+const { OllamaEmbeddingClient } = require('../OllamaEmbeddingClient');
 
 const dbDir = path.resolve(__dirname, '.');
 if (!fs.existsSync(dbDir)) {
@@ -13,6 +14,7 @@ if (!fs.existsSync(dbDir)) {
 const dbPath = path.join(dbDir, 'database.db');
 const db = new sqlite3.Database(dbPath);
 const ollamaClient = new OllamaClient();
+const ollamaEmbeddingClient = new OllamaEmbeddingClient();
 const textChunker = new TextChunker({ maxChunkSize: 1000, overlap: 150 });
 
 function runSql(sql, params = []) {
@@ -61,6 +63,7 @@ async function main() {
           start_pos INTEGER NOT NULL,
           end_pos INTEGER NOT NULL,
           chunk TEXT NOT NULL,
+          embedding BLOB,
           created DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (forhor_id) REFERENCES forhor(id) ON DELETE CASCADE
         )`, (err) => (err ? reject(err) : resolve())
@@ -108,12 +111,13 @@ async function main() {
             console.log(`Förhör #${forhorId} och dess höjdpunkter sparade i databasen. Highlights:`, highlights);
 
             console.log('Skapar chunks för förhör #', forhorId);
-            const chunks = textChunker.smartChunk(text);
+            const chunks = textChunker.rowChunk(text);//textChunker.smartChunk(text);
 
             chunks.forEach(async (chunk) => {
+                const embedding = await ollamaEmbeddingClient.embed(chunk.text);
                 await runSql(
-                    `INSERT INTO forhor_chunks (forhor_id, chunk_index, start_pos, end_pos, chunk) VALUES (?, ?, ?, ?, ?)`,
-                    [forhorId, chunk.index, chunk.start, chunk.end, chunk.text]
+                    `INSERT INTO forhor_chunks (forhor_id, chunk_index, start_pos, end_pos, chunk, embedding) VALUES (?, ?, ?, ?, ?, ?)`,
+                    [forhorId, chunk.index, chunk.start, chunk.end, chunk.text, Buffer.from(embedding)]
                 );
             });
             console.log(`${chunks.length}st chunks för förhör #${forhorId} sparade i databasen.`);
@@ -135,7 +139,6 @@ async function main() {
             });
         });
 
-        console.log('Förhör i databasen:', allForhor);
         db.close();
     } catch (err) {
         console.error('Seed failed:', err);
