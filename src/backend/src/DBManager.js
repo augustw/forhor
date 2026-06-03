@@ -78,16 +78,27 @@ class DBManager {
   getAllForhorChunks() {
     return new Promise((resolve, reject) => {
       this.db.all(
-        `SELECT forhor_id, chunk_index, start_pos, end_pos, chunk FROM forhor_chunks ORDER BY forhor_id, chunk_index`,
+        `SELECT forhor_id, chunk_index, start_pos, end_pos, chunk, embedding FROM forhor_chunks ORDER BY forhor_id, chunk_index`,
         (err, rows) => {
           if (err) {
             return reject(err);
           }
+          rows.map((row) => {
+            row.embedding = this.bufferToEmbedding(row.embedding);
+          });
           resolve(rows);
         }
       );
     });
   }
+
+  bufferToEmbedding(buffer) {
+  return new Float32Array(
+    buffer.buffer,
+    buffer.byteOffset,
+    buffer.length / 4
+  );
+}
 }
 
 module.exports = { DBManager };

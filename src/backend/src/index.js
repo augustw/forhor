@@ -85,17 +85,18 @@ app.post(`/api/forhor/search`, async (req, res) => {
 
   try {
     const queryEmbedding = await ollamaEmbeddingClient.embed(text);
-    console.log(`Query embedding:`, queryEmbedding);
     const chunks = await dbManager.getAllForhorChunks();
-    const results = chunks.map(chunk => {
+    const chunksSortedBySimilarity = chunks.map(chunk => {
       const chunkEmbedding = chunk.embedding; // Assuming this is stored as a Buffer
       const similarity = ollamaEmbeddingClient.cosineSimilarity(queryEmbedding, chunkEmbedding);
-      console.log("Similarity", similarity);
       return { ...chunk, similarity };
     }).sort((a, b) => b.similarity - a.similarity); // Sort by similarity
 
-    res.json({ results });
+    const chunksReranked = await ollamaClient.rerankChunks(text, chunksSortedBySimilarity.slice(0, 10)); // Rerank top 10 chunks
+    console.log(`Search results for query "${text}":`, chunksReranked.map(c => ({ chunk: c.chunk, similarity: c.similarity, rank: c.rank })));
+    res.json({ results: chunksReranked.slice(0, 5) }); // Return top 5 results after reranking
   } catch (err) {
+    console.error('Search failed:', err);
     res.status(500).json({
       error: "Failed to perform search",
       details: err.message,

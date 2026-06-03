@@ -19,6 +19,10 @@ const textChunker = new TextChunker({ maxChunkSize: 1000, overlap: 150 });
 
 function runSql(sql, params = []) {
     return new Promise((resolve, reject) => {
+        // Check if db connection is still open before running the query
+        if (!db || db.open === false) {
+            return reject(new Error('Database connection is closed'));
+        }
         db.run(sql, params, function (err) {
             if (err) {
                 return reject(err);
@@ -112,14 +116,17 @@ async function main() {
 
             console.log('Skapar chunks för förhör #', forhorId);
             const chunks = textChunker.rowChunk(text);//textChunker.smartChunk(text);
-
-            chunks.forEach(async (chunk) => {
+            console.log(`Förhör #${forhorId} delat i ${chunks.length} chunks.`);
+            await Promise.all(chunks.map(async (chunk) => {
                 const embedding = await ollamaEmbeddingClient.embed(chunk.text);
+                console.log(`Chunk #${chunk.index} embedding length:`, embedding.length);
+                const embeddingBuffer = Buffer.from(new Float32Array(embedding).buffer);
+                console.log(`Chunk #${chunk.index} embedding buffer length:`, embeddingBuffer.length);
                 await runSql(
                     `INSERT INTO forhor_chunks (forhor_id, chunk_index, start_pos, end_pos, chunk, embedding) VALUES (?, ?, ?, ?, ?, ?)`,
-                    [forhorId, chunk.index, chunk.start, chunk.end, chunk.text, Buffer.from(embedding)]
+                    [forhorId, chunk.index, chunk.start, chunk.end, chunk.text, embeddingBuffer]
                 );
-            });
+            }));
             console.log(`${chunks.length}st chunks för förhör #${forhorId} sparade i databasen.`);
         }
 
@@ -139,6 +146,7 @@ async function main() {
             });
         });
 
+        console.log("CLOSING DB CONNECTION. Total förhör in database:", allForhor.length);
         db.close();
     } catch (err) {
         console.error('Seed failed:', err);

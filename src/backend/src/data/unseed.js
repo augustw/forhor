@@ -23,9 +23,9 @@ function runSql(sql) {
 
 async function main() {
     await runSql('PRAGMA foreign_keys = ON;');
-    await runSql('DELETE FROM highlights;');
-    await runSql('DELETE FROM forhor_chunks;');
-    await runSql('DELETE FROM forhor;');
+    await runSql('DROP TABLE highlights;');
+    await runSql('DROP TABLE forhor_chunks;');
+    await runSql('DROP TABLE forhor;');
     await runSql('VACUUM;');
 
     console.log('Database tables emptied. You can now rerun npm run seed.');
