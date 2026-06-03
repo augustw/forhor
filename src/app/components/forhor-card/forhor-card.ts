@@ -47,13 +47,7 @@ export class ForhorCard {
           this.expanded.set(true);
         }
         this.setActiveHighlight(hoveredChunkText ?? null);
-
-        // Scroll card into view so the highlighted snippet is visible
-        try {
-          this.host.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } catch (e) {
-          // ignore if not available
-        }
+        this.scrollHighlightedIntoView();
       } else {
         // If hovering a chunk for another card, clear highlight here
         this.setActiveHighlight(null);
@@ -63,6 +57,21 @@ export class ForhorCard {
 
   ngOnDestroy(): void {
     this.hoverSub?.unsubscribe();
+  }
+
+  private scrollHighlightedIntoView(): void {
+    setTimeout(() => {
+      const highlighted = this.host.nativeElement.querySelector('.highlighted') as HTMLElement | null;
+      if (!highlighted) {
+        return;
+      }
+
+      try {
+        highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch {
+        highlighted.scrollIntoView();
+      }
+    }, 50);
   }
 
   getTextSegments(text: string, highlight: string | null): TextSegment[] {

@@ -5,6 +5,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatListModule } from '@angular/material/list';
 import { Chunk, ForhorService } from '../../forhor.service';
 
 @Component({
@@ -16,6 +17,7 @@ import { Chunk, ForhorService } from '../../forhor.service';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    MatListModule,
   ],
   templateUrl: './forhor-input.html',
   styleUrl: './forhor-input.scss',

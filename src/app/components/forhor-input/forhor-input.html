@@ -23,15 +23,15 @@
   @if (bestChunks().length > 0) {
     <div class="best-chunks">
       <h3>Relevanta utdrag:</h3>
-      <ul>
+      <mat-list>
         @for (chunk of bestChunks(); track chunk.chunk) {
-          <li (mouseenter)="forhorService.setHoverChunk(chunk)"
-              (mouseleave)="forhorService.setHoverChunk(null)">
-            {{ chunk.chunk }}</li>
+          <mat-list-item (mouseenter)="forhorService.setHoverChunk(chunk)"
+                         (mouseleave)="forhorService.setHoverChunk(null)"
+                         class="best-chunk-item">
+            <div matLine>{{ chunk.chunk }}</div>
+          </mat-list-item>
         }
-      </ul>
+      </mat-list>
     </div>
-  }<div>
-
-  </div>
+  }
 </div>

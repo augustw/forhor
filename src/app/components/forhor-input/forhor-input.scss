@@ -23,4 +23,18 @@
     flex-shrink: 0;
     margin-bottom: 0.5rem;
   }
+
+  .best-chunks {
+    max-height: 240px;
+    overflow: auto;
+    width: 420px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 0.5rem;
+  }
+
+  .best-chunk-item {
+    cursor: pointer;
+  }
 }
