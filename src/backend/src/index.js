@@ -94,7 +94,7 @@ app.post(`/api/forhor/search`, async (req, res) => {
 
     const chunksReranked = await ollamaClient.rerankChunks(text, chunksSortedBySimilarity.slice(0, 10)); // Rerank top 10 chunks
     console.log(`Search results for query "${text}":`, chunksReranked.map(c => ({ chunk: c.chunk, similarity: c.similarity, rank: c.rank })));
-    res.json({ results: chunksReranked.slice(0, 5) }); // Return top 5 results after reranking
+    res.json(chunksReranked.slice(0, 3)); // Return top 3 results after reranking
   } catch (err) {
     console.error('Search failed:', err);
     res.status(500).json({

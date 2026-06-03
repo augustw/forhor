@@ -19,4 +19,19 @@
   >
     <mat-icon>search</mat-icon>
   </button>
+  
+  @if (bestChunks().length > 0) {
+    <div class="best-chunks">
+      <h3>Relevanta utdrag:</h3>
+      <ul>
+        @for (chunk of bestChunks(); track chunk.chunk) {
+          <li (mouseenter)="forhorService.setHoverChunk(chunk)"
+              (mouseleave)="forhorService.setHoverChunk(null)">
+            {{ chunk.chunk }}</li>
+        }
+      </ul>
+    </div>
+  }<div>
+
+  </div>
 </div>

@@ -1,9 +1,11 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, signal, inject, OnInit, OnDestroy, ElementRef } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatChipsModule } from '@angular/material/chips';
 import { Forhor } from '../../model/forhor';
+import { ForhorService } from '../../forhor.service';
 
 interface TextSegment {
   text: string;
@@ -18,10 +20,50 @@ interface TextSegment {
 })
 export class ForhorCard {
   @Input() forhor!: Forhor;
-
   readonly activeHighlight = signal<string | null>(null);
   readonly expanded = signal(false);
   private readonly maxLines = 5;
+  private readonly forhorService = inject(ForhorService);
+  private readonly host = inject(ElementRef<HTMLElement>);
+  private hoverSub: Subscription | null = null;
+
+  ngOnInit(): void {
+    this.hoverSub = this.forhorService.hoverChunk$.subscribe((h) => {
+      if (!h) {
+        this.setActiveHighlight(null);
+        return;
+      }
+
+      if (!this.forhor) return;
+
+      const hoveredForhorId = (h as any).forhorId ?? (h as any).forhor_id;
+      const hoveredChunkText = (h as any).chunk ?? (h as any).text;
+
+      if (hoveredForhorId === this.forhor.id) {
+        // If the chunk is not visible in the truncated view, expand
+        const visible = this.getVisibleText(this.forhor.text || '');
+        const contains = hoveredChunkText ? visible.includes(hoveredChunkText) : false;
+        if (!contains && this.hasMoreThanMaxLines(this.forhor.text || '')) {
+          this.expanded.set(true);
+        }
+        this.setActiveHighlight(hoveredChunkText ?? null);
+
+        // Scroll card into view so the highlighted snippet is visible
+        try {
+          this.host.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {
+          // ignore if not available
+        }
+      } else {
+        // If hovering a chunk for another card, clear highlight here
+        this.setActiveHighlight(null);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.hoverSub?.unsubscribe();
+  }
 
   getTextSegments(text: string, highlight: string | null): TextSegment[] {
     if (!highlight || !text) {
