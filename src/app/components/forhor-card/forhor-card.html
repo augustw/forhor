@@ -6,32 +6,34 @@
   <mat-card-content>
     <p class="transcript">
       @for (segment of getTextSegments(getVisibleText(forhor.text), getHighlightForCard()); track segment.text) {
-        <span [class.highlighted]="segment.highlighted">{{ segment.text }}</span>
+      <span [class.highlighted]="segment.highlighted">{{ segment.text }}</span>
       }
     </p>
 
     @if (hasMoreThanMaxLines(forhor.text)) {
-      <button type="button" class="show-more-button" (click)="toggleExpanded()">
-        @if (expanded()) {
-          Visa mindre
-        } @else {
-          Visa mer...
-        }
-      </button>
+    <button type="button" class="show-more-button" (click)="toggleExpanded()">
+      @if (expanded()) {
+      Visa mindre
+      } @else {
+      Visa mer...
+      }
+    </button>
+    
     }
 
-    @if (forhor.highlights && forhor.highlights.length > 0) {
+    <div class="bottom-ct">
+      <button matButton="outlined" (click)="getSammanfattning()">Sammanfattning</button>
+
+      @if (forhor.highlights && forhor.highlights.length > 0) {
       <mat-chip-set>
         @for (highlight of forhor.highlights; track highlight) {
-          <mat-chip
-            (mouseenter)="setActiveHighlight(highlight)"
-            (mouseleave)="setActiveHighlight(null)"
-            [class.active]="isHighlightActive(highlight)"
-          >
-            {{ highlight }}
-          </mat-chip>
+        <mat-chip (mouseenter)="setActiveHighlight(highlight)" (mouseleave)="setActiveHighlight(null)"
+          [class.active]="isHighlightActive(highlight)">
+          {{ highlight }}
+        </mat-chip>
         }
       </mat-chip-set>
-    }
+      }
+    </div>
   </mat-card-content>
 </mat-card>

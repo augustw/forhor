@@ -47,6 +47,21 @@ class DBManager {
     });
   }
 
+  getForhor(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        `SELECT text FROM forhor WHERE id = ?`,
+        [id],
+        (err, row) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve(row);
+        }
+      );
+    });
+  }
+
   saveForhorAndHighlights(prompt, text, highlights) {
     return new Promise((resolve, reject) => {
       const db = this.db;

@@ -187,6 +187,50 @@ class OllamaClient {
     // Returnera endast de som fick en rankning
     return ranked.filter(c => c.rank);
   }
+
+  async sammanfattning(forhortext) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const prompt = `Sammanfatta förhöret nedan i några korta meningar. 
+              Fokusera på de mest relevanta och viktiga detaljerna som kan vara av intresse för en brottsutredare.
+              Sammanfattningen ska vara kort och koncis, max 5 meningar eller 300 tecken.\n\n
+              Förhörsmaterial: ${forhortext}`;
+    console.log(`Sending sammanfattning request to Ollama with prompt:`, prompt);
+
+    let response;
+    try {
+      response = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          stream: false,
+        }),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error(`Ollama request timed out after ${this.timeoutMs}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    const data = await response.json();
+
+    if (!data?.message?.content || typeof data.message.content !== 'string') {
+      throw new Error('Invalid response from Ollama for sammanfattning');
+    }
+
+    return data.message.content.trim();
+  }
 }
 
 module.exports = { OllamaClient };

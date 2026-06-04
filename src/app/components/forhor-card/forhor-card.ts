@@ -6,6 +6,8 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatChipsModule } from '@angular/material/chips';
 import { Forhor } from '../../model/forhor';
 import { ForhorService } from '../../forhor.service';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 interface TextSegment {
   text: string;
@@ -14,7 +16,7 @@ interface TextSegment {
 
 @Component({
   selector: 'app-forhor-card',
-  imports: [CommonModule, MatCardModule, MatBadgeModule, MatChipsModule],
+  imports: [CommonModule, MatCardModule, MatBadgeModule, MatChipsModule, MatButtonModule, MatSnackBarModule],
   templateUrl: './forhor-card.html',
   styleUrl: './forhor-card.scss',
 })
@@ -26,6 +28,7 @@ export class ForhorCard {
   private readonly forhorService = inject(ForhorService);
   private readonly host = inject(ElementRef<HTMLElement>);
   private hoverSub: Subscription | null = null;
+  snackbar = inject(MatSnackBar);
 
   ngOnInit(): void {
     this.hoverSub = this.forhorService.hoverChunk$.subscribe((h) => {
@@ -57,6 +60,11 @@ export class ForhorCard {
 
   ngOnDestroy(): void {
     this.hoverSub?.unsubscribe();
+  }
+
+  async getSammanfattning() {
+    const sammanfattning = await this.forhorService.getSammanfattning(this.forhor.id);
+    this.snackbar.open(sammanfattning, 'Stäng');
   }
 
   private scrollHighlightedIntoView(): void {

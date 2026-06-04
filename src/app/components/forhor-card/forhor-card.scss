@@ -28,3 +28,10 @@ mat-chip {
 .show-more-button:hover {
   text-decoration: underline;
 }
+
+.bottom-ct {
+  display: flex;
+  flex-direction: row;
+  margin-top: 2rem;
+  gap: 1rem;
+}

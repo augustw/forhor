@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { firstValueFrom, Observable, Subject } from 'rxjs';
 
 export interface Forhor {
   id: number;
@@ -42,5 +42,9 @@ export class ForhorService {
   /** Semantisk sökning efter text mot samtliga förhör */
   searchChunks(text: string): Observable<Chunk[]> {
     return this.http.post<Chunk[]>('/api/forhor/search', { text: text }, { headers: this.jsonHeaders });
+  }
+
+  getSammanfattning(id: number): Promise<string> {
+    return firstValueFrom(this.http.get(`/api/forhor/${id}/sammanfattning`, { responseType: 'text' }));
   }
 }

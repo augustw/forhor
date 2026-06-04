@@ -79,6 +79,30 @@ app.post('/api/embed', async (req, res) => {
   }
 });
 
+app.get('/api/forhor/:id/sammanfattning', async (req, res) => {
+  const forhorId = parseInt(req.params.id, 10);
+
+  if (isNaN(forhorId)) {
+    return res.status(400).json({ error: 'Invalid förhör ID' });
+  }
+
+  try {
+    const forhor = await dbManager.getForhor(forhorId);
+
+    if (!forhor) {
+      return res.status(404).json({ error: 'Förhör not found' });
+    }
+    
+    const sammanfattning = await ollamaClient.sammanfattning(forhor.text);
+    res.json(sammanfattning);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to summarize förhör",
+      details: err.message,
+    });
+  }
+});
+
 app.post(`/api/forhor/search`, async (req, res) => {
   const { text } = req.body;
   console.log(`Received search query:`, text);
